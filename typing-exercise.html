@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Skills Exercise</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: #f7f7f7;
+            padding: 15px 25px;
+            border-radius: 10px;
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .character-display {
+            background: #f0f0f0;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 60px;
+            margin: 30px 0;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-char {
+            font-size: 5em;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .instruction {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-item {
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .result-label {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .result-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.3em;
+        }
+
+        .try-again-btn {
+            display: none;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        .try-again-btn:hover {
+            background: #764ba2;
+        }
+
+        .try-again-btn.show {
+            display: inline-block;
+        }
+
+        .progress {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .error-flash {
+            animation: flash 0.3s;
+        }
+
+        @keyframes flash {
+            0%, 100% { background: #f0f0f0; }
+            50% { background: #ffcccc; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⌨️ Typing Skills Exercise</h1>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Progress</div>
+                <div class="stat-value" id="progress">0/100</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Errors</div>
+                <div class="stat-value" id="errors">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Time (s)</div>
+                <div class="stat-value" id="timer">0</div>
+            </div>
+        </div>
+
+        <div class="instruction" id="instruction">
+            Press the key shown below to begin...
+        </div>
+
+        <div class="character-display" id="charDisplay">
+            <div class="current-char" id="currentChar">A</div>
+        </div>
+
+        <div class="progress" id="progressText">
+            Type the character shown above
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-item">
+                <span class="result-label">Total Errors:</span>
+                <span class="result-value" id="finalErrors">0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Time:</span>
+                <span class="result-value" id="finalTime">0</span> seconds
+            </div>
+        </div>
+
+        <button class="try-again-btn" id="tryAgainBtn" onclick="resetExercise()">
+            Try Again
+        </button>
+    </div>
+
+    <script>
+        // Character set: numbers, uppercase, lowercase, space, and special characters
+        const characters = [
+            // Numbers
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            // Uppercase letters
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            // Lowercase letters
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            // Space
+            ' ',
+            // Special characters
+            '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+',
+            '[', ']', '{', '}', '\\', '|', ';', ':', "'", '"', ',', '.', '<', '>',
+            '/', '?', '`', '~'
+        ];
+
+        let currentChar = '';
+        let charCount = 0;
+        let errorCount = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let sessionActive = false;
+
+        function getRandomCharacter() {
+            return characters[Math.floor(Math.random() * characters.length)];
+        }
+
+        function displayCharacter(char) {
+            const charElement = document.getElementById('currentChar');
+            
+            // Display special representation for whitespace
+            if (char === ' ') {
+                charElement.textContent = '[space]';
+            } else if (char === '\t') {
+                charElement.textContent = '[tab]';
+            } else {
+                charElement.textContent = char;
+            }
+        }
+
+        function nextCharacter() {
+            if (charCount >= 100) {
+                endSession();
+                return;
+            }
+
+            currentChar = getRandomCharacter();
+            displayCharacter(currentChar);
+            charCount++;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            document.getElementById('progress').textContent = `${charCount}/100`;
+        }
+
+        function updateTimer() {
+            if (startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timer').textContent = elapsed;
+            }
+        }
+
+        function startTimer() {
+            if (!startTime) {
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 100);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (!sessionActive) return;
+
+            const pressedKey = event.key;
+
+            // Start timer on first key press
+            if (charCount === 1 && !startTime) {
+                startTimer();
+            }
+
+            // Check if the pressed key matches the current character
+            if (pressedKey === currentChar) {
+                // Correct key pressed
+                nextCharacter();
+            } else {
+                // Wrong key pressed
+                errorCount++;
+                document.getElementById('errors').textContent = errorCount;
+                
+                // Flash effect on error
+                const charDisplay = document.getElementById('charDisplay');
+                charDisplay.classList.add('error-flash');
+                setTimeout(() => {
+                    charDisplay.classList.remove('error-flash');
+                }, 300);
+            }
+        }
+
+        function endSession() {
+            sessionActive = false;
+            clearInterval(timerInterval);
+
+            const finalTime = Math.floor((Date.now() - startTime) / 1000);
+
+            // Hide game elements
+            document.getElementById('instruction').style.display = 'none';
+            document.getElementById('charDisplay').style.display = 'none';
+            document.getElementById('progressText').style.display = 'none';
+
+            // Show results
+            document.getElementById('finalErrors').textContent = errorCount;
+            document.getElementById('finalTime').textContent = finalTime;
+            document.getElementById('results').classList.add('show');
+            document.getElementById('tryAgainBtn').classList.add('show');
+
+            // Remove keypress listener
+            document.removeEventListener('keypress', handleKeyPress);
+        }
+
+        function resetExercise() {
+            // Reset all variables
+            charCount = 0;
+            errorCount = 0;
+            startTime = null;
+            currentChar = '';
+            sessionActive = true;
+
+            // Reset display
+            document.getElementById('progress').textContent = '0/100';
+            document.getElementById('errors').textContent = '0';
+            document.getElementById('timer').textContent = '0';
+
+            // Show game elements
+            document.getElementById('instruction').style.display = 'block';
+            document.getElementById('charDisplay').style.display = 'flex';
+            document.getElementById('progressText').style.display = 'block';
+
+            // Hide results
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('tryAgainBtn').classList.remove('show');
+
+            // Clear timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            // Start new session
+            nextCharacter();
+            document.addEventListener('keypress', handleKeyPress);
+        }
+
+        // Initialize the exercise
+        window.onload = function() {
+            sessionActive = true;
+            nextCharacter();
+            document.addEventListener('keypress', handleKeyPress);
+        };
+    </script>
+</body>
+</html>
